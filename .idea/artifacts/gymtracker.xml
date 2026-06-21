@@ -1,0 +1,12 @@
+<component name="ArtifactManager">
+  <artifact type="exploded-war" name="gymtracker">
+    <output-path>$PROJECT_DIR$/out/artifacts/gymtracker</output-path>
+    <root id="root">
+      <element id="directory" name="WEB-INF">
+        <element id="directory" name="classes">
+          <element id="module-output" name="MyGymTracker" />
+        </element>
+      </element>
+    </root>
+  </artifact>
+</component>
