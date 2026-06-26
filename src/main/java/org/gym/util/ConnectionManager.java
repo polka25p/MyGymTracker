@@ -8,27 +8,21 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 public class ConnectionManager {
+    public static final String DB_URL;
+    public static final String DB_USERNAME;
+    public static final String DB_PASSWORD;
 
-    private static final Properties PROPERTIES = new Properties();
     static {
-        loadProperties();
-    }
-
-    private ConnectionManager() {}
-
-    private static void loadProperties() {
-        try (InputStream inputStream = ConnectionManager.class
-                .getClassLoader()
-                .getResourceAsStream("application.properties")) {
-
-            if (inputStream == null) {
-                throw new RuntimeException("Не вдалося знайти файл application.properties у resources!");
-            }
-
-            PROPERTIES.load(inputStream);
-
+        Properties properties = new Properties();
+        try {
+            InputStream inputStream = ConnectionManager.class.getClassLoader().
+                    getResourceAsStream("application.properties");
+            properties.load(inputStream);
+            DB_URL = properties.getProperty("db_url");
+            DB_USERNAME = properties.getProperty("db_username");
+            DB_PASSWORD = properties.getProperty("db_password");
         } catch (IOException e) {
-            throw new RuntimeException("Помилка під час завантаження конфігурації БД", e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -36,13 +30,8 @@ public class ConnectionManager {
         try {
             Class.forName("org.postgresql.Driver");
         } catch (ClassNotFoundException e) {
-            throw new SQLException("Драйвер PostgreSQL не знайдено!", e);
+            throw new SQLException(e);
         }
-
-        return DriverManager.getConnection(
-                PROPERTIES.getProperty("db.url"),
-                PROPERTIES.getProperty("db.username"),
-                PROPERTIES.getProperty("db.password")
-        );
+        return DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
     }
 }
