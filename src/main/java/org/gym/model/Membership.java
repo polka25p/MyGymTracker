@@ -8,6 +8,7 @@ import java.time.LocalDate;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+
 public class Membership {
 private  int id;
 private LocalDate nextPaymentDate;
