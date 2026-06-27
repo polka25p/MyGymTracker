@@ -1,7 +1,6 @@
 package org.gym.model;
 
 import lombok.*;
-
 import java.time.LocalDate;
 
 @Getter
@@ -10,8 +9,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 
 public class Membership {
-private  int id;
-private LocalDate nextPaymentDate;
-private double price;
-
+    private  int id;
+    private LocalDate nextPaymentDate;
+    private double price;
 }
