@@ -8,6 +8,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.gym.dao.WorkoutVisitDao;
 import org.gym.dao.impl.WorkoutVisitDaoImpl;
 import org.gym.model.WorkoutVisit;
+import org.gym.service.GymService;
+import org.gym.service.MembershipService;
+import org.gym.service.impl.GymServiceImpl;
+import org.gym.service.impl.MembershipServiceImpl;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -17,52 +21,65 @@ import java.util.List;
 @WebServlet("/workouts")
 public class WorkoutServlet extends HttpServlet {
     private final WorkoutVisitDao workoutDao = new WorkoutVisitDaoImpl();
+    private final GymService gymService = new GymServiceImpl();
+    private final MembershipService membershipService = new MembershipServiceImpl();
+    private LocalDate nextPaymentDate = LocalDate.now().plusDays(14);
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         try {
             List<WorkoutVisit> workouts = workoutDao.getAllWorkouts();
+
+            double trainerDebt = gymService.calculateTrainerDebts(workouts);
+            long monthlyCount = gymService.getWorkoutCountInCurrentMonth(workouts);
+
+            long daysLeft = membershipService.calculateDaysLeft(nextPaymentDate);
+            boolean isActive = membershipService.isSubscriptionActive(nextPaymentDate);
+
             request.setAttribute("workouts", workouts);
+            request.setAttribute("trainerDebt", trainerDebt);
+            request.setAttribute("monthlyWorkouts", monthlyCount);
+            request.setAttribute("daysLeft", daysLeft);
+            request.setAttribute("isMembershipActive", isActive);
+            request.setAttribute("nextPaymentDate", nextPaymentDate);
+
             request.getRequestDispatcher("/workouts.jsp").forward(request, response);
         } catch (SQLException e) {
-            throw new ServletException("Помилка підключення до бази даних!", e);
+            throw new ServletException("Помилка завантаження даних", e);
         }
     }
 
     @Override
-    protected void doPost(HttpServletRequest request,
-                          HttpServletResponse response)
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        String action = request.getParameter("action");
-        if (action != null && action.equals("delete")) {
-            String idParam = request.getParameter("id");
-            int id = Integer.parseInt(idParam);
-            try {
-                workoutDao.delete(id);
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-            response.sendRedirect(request.getContextPath() + "/workouts");
-        } else {
-            String dateParam = request.getParameter("visitDate");
-            LocalDate visitDate = LocalDate.parse(dateParam);
-            String notes = request.getParameter("notes");
-            boolean withTrainer = request.getParameter("withTrainer") != null;
-            boolean trainerPaid = request.getParameter("trainerPaid") != null;
 
-            WorkoutVisit workout = new WorkoutVisit();
-            workout.setVisitDate(visitDate);
-            workout.setNotes(notes);
-            workout.setWithTrainer(withTrainer);
-            workout.setTrainerPaid(trainerPaid);
+        String action = request.getParameter("action");
+
+        if ("updateMembership".equals(action)) {
+            String newDateStr = request.getParameter("newPaymentDate");
+            if (newDateStr != null && !newDateStr.isEmpty()) {
+                this.nextPaymentDate = LocalDate.parse(newDateStr);
+            }
+        } else {
             try {
+                String visitDateStr = request.getParameter("visitDate");
+                String notes = request.getParameter("notes");
+                boolean withTrainer = "true".equals(request.getParameter("withTrainer"));
+                boolean trainerPaid = "true".equals(request.getParameter("trainerPaid"));
+
+                WorkoutVisit workout = new WorkoutVisit();
+                workout.setVisitDate(LocalDate.parse(visitDateStr));
+                workout.setNotes(notes);
+                workout.setWithTrainer(withTrainer);
+                workout.setTrainerPaid(trainerPaid);
+
                 workoutDao.save(workout);
             } catch (SQLException e) {
-                throw new ServletException(e);
+                throw new ServletException("Помилка збереження тренування", e);
             }
-
-            response.sendRedirect(request.getContextPath() + "/workouts");
         }
+
+        response.sendRedirect(request.getContextPath() + "/workouts");
     }
 }

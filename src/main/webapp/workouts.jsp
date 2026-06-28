@@ -1,8 +1,8 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" isELIgnored="false" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <html>
 <head>
-  <title>My Gym Tracker - Тренування</title>
+  <title>My Gym Tracker</title>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -119,7 +119,6 @@
       width: 18px;
       height: 18px;
       margin-right: 12px;
-      cursor: pointer;
       accent-color: #3b82f6;
     }
 
@@ -149,16 +148,6 @@
 
     .btn-submit:hover {
       background-color: #2563eb;
-      box-shadow: 0 6px 16px rgba(59, 130, 246, 0.3);
-    }
-
-    .btn-submit:active {
-      transform: scale(0.99);
-    }
-
-    .table-responsive {
-      width: 100%;
-      overflow-x: auto;
     }
 
     table {
@@ -186,10 +175,6 @@
       vertical-align: middle;
     }
 
-    tr:last-child td {
-      border-bottom: none;
-    }
-
     tr:hover td {
       background-color: #fafafa;
     }
@@ -203,18 +188,29 @@
       border-radius: 6px;
     }
 
-    .badge-success {
-      background-color: #dcfce7;
-      color: #15803d;
+    .badge-success { background-color: #dcfce7; color: #15803d; }
+    .badge-secondary { background-color: #f1f5f9; color: #64748b; }
+
+    .btn-details {
+      background-color: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+      padding: 6px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: all 0.2s;
     }
 
-    .badge-secondary {
-      background-color: #f1f5f9;
-      color: #64748b;
+    .btn-details:hover {
+      background-color: #3b82f6;
+      color: white;
+      border-color: #3b82f6;
     }
 
     .btn-delete {
-      background-color: transparent;
+      background-color: #fef2f2;
       color: #ef4444;
       border: 1px solid #fee2e2;
       padding: 6px 12px;
@@ -223,25 +219,90 @@
       font-size: 0.85rem;
       font-weight: 500;
       transition: all 0.2s;
-      background-color: #fef2f2;
     }
 
     .btn-delete:hover {
       background-color: #ef4444;
       color: white;
-      border-color: #ef4444;
     }
 
-    .delete-form {
-      margin: 0;
-      padding: 0;
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15, 23, 42, 0.4);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
     }
 
-    .empty-state {
-      text-align: center;
-      color: #64748b;
-      padding: 30px 0;
-      font-style: italic;
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-window {
+      background: #ffffff;
+      padding: 30px;
+      border-radius: 16px;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      transform: scale(0.9);
+      transition: transform 0.25s ease;
+    }
+
+    .modal-overlay.active .modal-window {
+      transform: scale(1);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 15px;
+      margin-bottom: 15px;
+    }
+
+    .modal-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #0f172a;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: #94a3b8;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .modal-close:hover {
+      color: #475569;
+    }
+
+    .modal-body {
+      font-size: 0.95rem;
+      color: #334155;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+
+    .actions-cell {
+      text-align: right;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
     }
   </style>
 </head>
@@ -254,9 +315,40 @@
     <p>Ваш персональний щоденник залікових тренувань</p>
   </div>
 
+  <div style="display: flex; gap: 20px; margin-bottom: 25px;">
+
+    <div style="flex: 1; background: ${isMembershipActive ? '#d4edda' : '#f8d7da'}; border-left: 5px solid ${isMembershipActive ? '#28a745' : '#dc3545'}; padding: 15px; border-radius: 4px;">
+      <h3 style="margin: 0 0 5px 0; color: #155724;">Мій Абонемент 🎫</h3>
+      <p style="margin: 0; font-size: 16px;">
+        Статус: <strong>${isMembershipActive ? 'Активний ✅' : 'Протермінований ❌'}</strong>
+      </p>
+      <p style="margin: 5px 0 10px 0; font-size: 16px;">
+        Залишилось днів: <strong>${daysLeft}</strong> (до ${nextPaymentDate})
+      </p>
+
+      <form action="${pageContext.request.contextPath}/workouts" method="POST" style="margin: 0; display: flex; gap: 5px;">
+        <input type="hidden" name="action" value="updateMembership">
+        <input type="date" name="newPaymentDate" required style="padding: 4px; font-size: 13px;">
+        <button type="submit" style="background: #17a2b8; color: white; border: 0; padding: 4px 10px; border-radius: 3px; cursor: pointer; font-size: 13px;">
+          Продовжити 🔄
+        </button>
+      </form>
+    </div>
+
+    <div style="flex: 1; background: #fff3cd; border-left: 5px solid #ffc107; padding: 15px; border-radius: 4px;">
+      <h3 style="margin: 0 0 5px 0; color: #856404;">Аналітика та Фінанси 💰</h3>
+      <p style="margin: 0; font-size: 16px; color: #856404;">
+        Борг перед тренером: <strong>${trainerDebt} грн.</strong>
+      </p>
+      <p style="margin: 5px 0 0 0; font-size: 16px; color: #856404;">
+        Тренувань цього місяця: <span style="background: #ffc107; padding: 2px 8px; border-radius: 10px; font-weight: bold;">${monthlyWorkouts}</span> 🏋️‍♀️
+      </p>
+    </div>
+
+  </div>m
+
   <div class="card">
     <div class="card-title">📝 Додати нове тренування</div>
-
     <form action="${pageContext.request.contextPath}/workouts" method="POST">
       <input type="hidden" name="action" value="add">
 
@@ -268,7 +360,7 @@
       <div class="form-group">
         <label for="workoutNotes">Нотатки / План тренування</label>
         <textarea id="workoutNotes" name="notes" class="form-control"
-                  placeholder="Вставте план від Gemini або розпишіть вправи (наприклад: Присідання 4х10, Жим 3х12)..."></textarea>
+                  placeholder="Вставте план від Gemini або розпишіть вправи..."></textarea>
       </div>
 
       <div class="checkbox-row">
@@ -276,7 +368,6 @@
           <input type="checkbox" id="withTrainer" name="withTrainer" value="true">
           <label for="withTrainer">🧑‍🏫 З тренером</label>
         </div>
-
         <div class="checkbox-group">
           <input type="checkbox" id="trainerPaid" name="trainerPaid" value="true">
           <label for="trainerPaid">💵 Оплачено тренеру</label>
@@ -290,56 +381,98 @@
   <div class="card">
     <div class="card-title">📊 Історія активностей</div>
 
-    <div class="table-responsive">
-      <c:choose>
-        <c:when test="${empty workouts}">
-          <div class="empty-state">
-            <p>Тренувань поки немає. Час завітати до залу! 💪</p>
-          </div>
-        </c:when>
-        <c:otherwise>
-          <table>
-            <thead>
+    <c:choose>
+      <c:when test="${empty workouts}">
+        <div style="text-align: center; color: #64748b; padding: 30px 0;">
+          <p>Тренувань поки немає. Час завітати до залу! 💪</p>
+        </div>
+      </c:when>
+      <c:otherwise>
+        <table>
+          <thead>
+          <tr>
+            <th>Дата</th>
+            <th>Короткий опис</th>
+            <th>Тренер</th>
+            <th>Оплата</th>
+            <th style="text-align: right;">Дії</th>
+          </tr>
+          </thead>
+          <tbody>
+          <c:forEach var="workout" items="${workouts}">
             <tr>
-              <th>Дата</th>
-              <th>План / Нотатки</th>
-              <th>Тренер</th>
-              <th>Оплата</th>
-              <th style="text-align: right;">Дії</th>
-            </tr>
-            </thead>
-            <tbody>
-            <c:forEach var="workout" items="${workouts}">
-              <tr>
-                <td style="font-weight: 600; white-space: nowrap;">${workout.visitDate}</td>
-                <td style="color: #475569;">${workout.notes}</td>
-                <td>
-                                        <span class="badge ${workout.withTrainer ? 'badge-success' : 'badge-secondary'}">
-                                            ${workout.withTrainer ? 'Так' : 'Ні'}
-                                        </span>
-                </td>
-                <td>
-                                        <span class="badge ${workout.trainerPaid ? 'badge-success' : 'badge-secondary'}">
-                                            ${workout.trainerPaid ? 'Оплачено' : 'Ні'}
-                                        </span>
-                </td>
-                <td style="text-align: right;">
-                  <form action="workouts" method="POST" class="delete-form" onsubmit="return confirm('Ви впевнені, що хочете видалити це тренування?');">
+              <td style="font-weight: 600; white-space: nowrap;">${workout.visitDate}</td>
+              <td style="color: #475569; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                <c:out value="${workout.notes}" />
+              </td>
+              <td>
+                                    <span class="badge ${workout.withTrainer ? 'badge-success' : 'badge-secondary'}">
+                                        ${workout.withTrainer ? 'Так' : 'Ні'}
+                                    </span>
+              </td>
+              <td>
+                                    <span class="badge ${workout.trainerPaid ? 'badge-success' : 'badge-secondary'}">
+                                        ${workout.trainerPaid ? 'Оплачено' : 'Ні'}
+                                    </span>
+              </td>
+              <td>
+                <div class="actions-cell">
+                  <button class="btn-details"
+                          data-date="${workout.visitDate}"
+                          data-notes="<c:out value='${workout.notes}' />"
+                          onclick="showWorkoutDetails(this)">
+                    🔍 Деталі
+                  </button>
+
+                  <form action="workouts" method="POST" style="margin:0;" onsubmit="return confirm('Ви впевнені?');">
                     <input type="hidden" name="action" value="delete">
                     <input type="hidden" name="id" value="${workout.id}">
                     <button type="submit" class="btn-delete">Видалити</button>
                   </form>
-                </td>
-              </tr>
-            </c:forEach>
-            </tbody>
-          </table>
-        </c:otherwise>
-      </c:choose>
+                </div>
+              </td>
+            </tr>
+          </c:forEach>
+          </tbody>
+        </table>
+      </c:otherwise>
+    </c:choose>
+  </div>
+</div>
+
+<div id="detailsModal" class="modal-overlay" onclick="closeModal()">
+  <div class="modal-window" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Деталі тренування</div>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="modalBody">
+      Тут буде текст...
     </div>
   </div>
-
 </div>
+
+<script>
+  function showWorkoutDetails(button) {
+    var date = button.getAttribute('data-date');
+    var notes = button.getAttribute('data-notes');
+
+    document.getElementById('modalTitle').innerText = "🏋️‍♂️ Тренування від " + date;
+    document.getElementById('modalBody').innerText = notes && notes.trim() !== "" ? notes : "Нотатки порожні або відсутні.";
+
+    document.getElementById('detailsModal').classList.add('active');
+  }
+
+  function closeModal() {
+    document.getElementById('detailsModal').classList.remove('active');
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeModal();
+    }
+  });
+</script>
 
 </body>
 </html>
