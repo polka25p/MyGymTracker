@@ -101,4 +101,27 @@ public class WorkoutVisitDaoImpl implements WorkoutVisitDao {
             statement.executeUpdate();
         }
     }
+
+    String sql_update = "UPDATE workouts SET trainer_paid = true WHERE id = ?;";
+
+    /**
+     * Updates the trainer's payment status for a specific workout visit to {@code true}.
+     * <p>
+     * This method executes an SQL {@code UPDATE} statement that modifies the
+     * {@code trainer_paid} flag for the record that matches the provided unique identifier.
+     * </p>
+     *
+     * @param id the unique identifier (ID) of the workout visit to be updated.
+     * @throws SQLException if a database access error occurs or the SQL query fails.
+     */
+
+    @Override
+    public void updateTrainerPaidStatus(int id) throws SQLException {
+        try (Connection connection = ConnectionManager.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql_update)) {
+
+            preparedStatement.setInt(1, id);
+            preparedStatement.executeUpdate();
+        }
+    }
 }

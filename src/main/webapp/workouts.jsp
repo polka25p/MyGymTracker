@@ -345,7 +345,7 @@
       </p>
     </div>
 
-  </div>m
+  </div>
 
   <div class="card">
     <div class="card-title">📝 Додати нове тренування</div>
@@ -399,37 +399,81 @@
           </tr>
           </thead>
           <tbody>
-          <c:forEach var="workout" items="${workouts}">
+          <c:forEach items="${workouts}" var="workout">
             <tr>
-              <td style="font-weight: 600; white-space: nowrap;">${workout.visitDate}</td>
-              <td style="color: #475569; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                <c:out value="${workout.notes}" />
-              </td>
-              <td>
-                                    <span class="badge ${workout.withTrainer ? 'badge-success' : 'badge-secondary'}">
-                                        ${workout.withTrainer ? 'Так' : 'Ні'}
-                                    </span>
-              </td>
-              <td>
-                                    <span class="badge ${workout.trainerPaid ? 'badge-success' : 'badge-secondary'}">
-                                        ${workout.trainerPaid ? 'Оплачено' : 'Ні'}
-                                    </span>
-              </td>
-              <td>
-                <div class="actions-cell">
-                  <button class="btn-details"
-                          data-date="${workout.visitDate}"
-                          data-notes="<c:out value='${workout.notes}' />"
-                          onclick="showWorkoutDetails(this)">
-                    🔍 Деталі
-                  </button>
+              <td style="font-weight: 600; color: #0f172a;">${workout.visitDate}</td>
 
-                  <form action="workouts" method="POST" style="margin:0;" onsubmit="return confirm('Ви впевнені?');">
-                    <input type="hidden" name="action" value="delete">
-                    <input type="hidden" name="id" value="${workout.id}">
-                    <button type="submit" class="btn-delete">Видалити</button>
-                  </form>
-                </div>
+              <td>
+                <c:choose>
+                  <c:when test="${not empty workout.notes}">
+                    <c:choose>
+                      <c:when test="${workout.notes.length() > 30}">
+                        <c:out value="${workout.notes.substring(0, 30)}..."/>
+                      </c:when>
+                      <c:otherwise>
+                        <c:out value="${workout.notes}"/>
+                      </c:otherwise>
+                    </c:choose>
+                  </c:when>
+                  <c:otherwise>
+                    <span style="color: #94a3b8; font-style: italic;">Немає нотаток</span>
+                  </c:otherwise>
+                </c:choose>
+              </td>
+
+              <td>
+                <c:choose>
+                  <c:when test="${workout.withTrainer}">
+                    <span style="color: #3b82f6; font-weight: 500;">🧑‍🏫 Так</span>
+                  </c:when>
+                  <c:otherwise>
+                    <span style="color: #94a3b8;">Самостійно</span>
+                  </c:otherwise>
+                </c:choose>
+              </td>
+
+              <td>
+                <c:choose>
+                  <c:when test="${workout.withTrainer}">
+                    <c:choose>
+                      <c:when test="${workout.trainerPaid}">
+                        <span class="badge badge-success">Оплачено ✅</span>
+                      </c:when>
+                      <c:otherwise>
+                        <form action="${pageContext.request.contextPath}/workouts" method="POST" style="margin: 0; display: inline;">
+                          <input type="hidden" name="action" value="pay">
+                          <input type="hidden" name="id" value="${workout.id}">
+                          <button type="submit" class="badge badge-secondary"
+                                  style="border: 1px solid #cbd5e1; cursor: pointer; transition: all 0.2s; font-family: inherit;"
+                                  onmouseover="this.style.backgroundColor='#fee2e2'; this.style.color='#ef4444'; this.style.borderColor='#fca5a5';"
+                                  onmouseout="this.style.backgroundColor='#f1f5f9'; this.style.color='#64748b'; this.style.borderColor='#cbd5e1';">
+                            Ні 💸
+                          </button>
+                        </form>
+                      </c:otherwise>
+                    </c:choose>
+                  </c:when>
+                  <c:otherwise>
+                    <span style="color: #94a3b8; font-size: 0.85rem;">—</span>
+                  </c:otherwise>
+                </c:choose>
+              </td>
+
+              <td class="actions-cell">
+                <button type="button" class="btn-details"
+                        data-date="${workout.visitDate}"
+                        data-notes="<c:out value='${workout.notes}' />"
+                        onclick="showWorkoutDetails(this)">
+                  Details
+                </button>
+
+                <form action="${pageContext.request.contextPath}/workouts" method="POST" style="margin: 0; display: inline;">
+                  <input type="hidden" name="action" value="delete">
+                  <input type="hidden" name="id" value="${workout.id}">
+                  <button type="submit" class="btn-delete" onclick="return confirm('Ви впевнені, що хочете видалити це тренування?')">
+                    Delete
+                  </button>
+                </form>
               </td>
             </tr>
           </c:forEach>

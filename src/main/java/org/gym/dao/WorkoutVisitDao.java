@@ -45,4 +45,12 @@ public interface WorkoutVisitDao {
      * @throws SQLException if a database access error occurs or the operation fails.
      */
     void delete(int id) throws SQLException;
+
+    /**
+     * Updates the trainer payment status to paid for a specific workout visit.
+     *
+     * @param id the unique identifier of the workout visit
+     * @throws SQLException if a database access error occurs
+     */
+    void updateTrainerPaidStatus(int id) throws SQLException;
 }
