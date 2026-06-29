@@ -56,30 +56,44 @@ public class WorkoutServlet extends HttpServlet {
 
         String action = request.getParameter("action");
 
-        if ("updateMembership".equals(action)) {
-            String newDateStr = request.getParameter("newPaymentDate");
-            if (newDateStr != null && !newDateStr.isEmpty()) {
-                this.nextPaymentDate = LocalDate.parse(newDateStr);
-            }
-        } else {
-            try {
+        try {
+            if ("updateMembership".equals(action)) {
+                String newDateStr = request.getParameter("newPaymentDate");
+                if (newDateStr != null && !newDateStr.isEmpty()) {
+                    this.nextPaymentDate = LocalDate.parse(newDateStr);
+                }
+
+            } else if ("delete".equals(action)) {
+                // 1. Отримуємо ID тренування для видалення
+                String idStr = request.getParameter("id");
+                if (idStr != null && !idStr.isEmpty()) {
+                    int id = (int) Long.parseLong(idStr);
+                    // 2. Викликаємо метод видалення у твого DAO
+                    workoutDao.delete(id);
+                }
+
+            } else {
+                // 4. Створення НОВОГО тренування (спрацьовує, коли action порожній)
                 String visitDateStr = request.getParameter("visitDate");
                 String notes = request.getParameter("notes");
                 boolean withTrainer = "true".equals(request.getParameter("withTrainer"));
                 boolean trainerPaid = "true".equals(request.getParameter("trainerPaid"));
 
-                WorkoutVisit workout = new WorkoutVisit();
-                workout.setVisitDate(LocalDate.parse(visitDateStr));
-                workout.setNotes(notes);
-                workout.setWithTrainer(withTrainer);
-                workout.setTrainerPaid(trainerPaid);
+                if (visitDateStr != null && !visitDateStr.isEmpty()) {
+                    WorkoutVisit workout = new WorkoutVisit();
+                    workout.setVisitDate(LocalDate.parse(visitDateStr));
+                    workout.setNotes(notes);
+                    workout.setWithTrainer(withTrainer);
+                    workout.setTrainerPaid(trainerPaid);
 
-                workoutDao.save(workout);
-            } catch (SQLException e) {
-                throw new ServletException("Помилка збереження тренування", e);
+                    workoutDao.save(workout);
+                }
             }
+        } catch (SQLException e) {
+            throw new ServletException("Помилка обробки запиту в базі даних", e);
         }
 
+        // Захист від повторного відправлення форми (PRG)
         response.sendRedirect(request.getContextPath() + "/workouts");
     }
 }
